@@ -1,23 +1,31 @@
+from flask import Flask, render_template, request, jsonify
 from emotion import detect_emotion, split_text
 from tts import speak_parts
 
-def main():
-    print("=== Empathy Engine (Advanced) ===")
+app = Flask(__name__)
 
-    text = input("Enter text: ")
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+@app.route("/process", methods=["POST"])
+def process():
+    data = request.json
+    text = data["text"]
 
     parts = split_text(text)
 
     parts_with_emotion = []
-
     for part in parts:
         emotion, intensity = detect_emotion(part)
-        print(f"{part} → {emotion} ({intensity:.2f})")
         parts_with_emotion.append((part, emotion, intensity))
 
     speak_parts(parts_with_emotion)
 
-    print("Audio saved as output.mp3")
+    return jsonify({
+        "status": "success",
+        "audio": "/static/output.mp3"
+    })
 
 if __name__ == "__main__":
-    main()
+    app.run(debug=True)

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Empathy Engine Chat</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #ece5dd;
+            display: flex;
+            justify-content: center;
+        }
+
+        .chat-box {
+            width: 400px;
+            background: #fff;
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 30px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+        }
+
+        .messages {
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+
+        .msg {
+            margin: 8px 0;
+            padding: 8px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+
+        .user {
+            background: #dcf8c6;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .bot {
+            background: #f1f0f0;
+            text-align: left;
+        }
+
+        input {
+            width: 70%;
+            padding: 6px;
+        }
+
+        button {
+            padding: 6px;
+            margin-left: 5px;
+            cursor: pointer;
+        }
+
+        .controls {
+            margin-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="chat-box">
+    <div class="messages" id="messages"></div>
+
+    <input type="text" id="text" placeholder="Type message...">
+    <button onclick="sendMessage()">Send</button>
+</div>
+
+<script>
+function sendMessage() {
+    let text = document.getElementById("text").value;
+    if (!text) return;
+
+    let messages = document.getElementById("messages");
+
+    // Show user message
+    messages.innerHTML += `<div class="msg user">${text}</div>`;
+
+    fetch("/process", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ text: text })
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        let audioUrl = data.audio + "?t=" + new Date().getTime();
+
+        // Add bot message with controls
+        let audioId = "audio_" + Date.now();
+
+        messages.innerHTML += `
+            <div class="msg bot">
+                <audio id="${audioId}" controls>
+                    <source src="${audioUrl}" type="audio/wav">
+                </audio>
+                <div class="controls">
+                    <button onclick="playAudio('${audioId}')">▶ Play</button>
+                    <a href="${audioUrl}" download>
+                        <button>⬇ Download</button>
+                    </a>
+                </div>
+            </div>
+        `;
+
+        // Auto-play
+        setTimeout(() => {
+            document.getElementById(audioId).play();
+        }, 300);
+
+        document.getElementById("text").value = "";
+        messages.scrollTop = messages.scrollHeight;
+    });
+}
+
+function playAudio(id) {
+    document.getElementById(id).play();
+}
+</script>
+
+</body>
+</html>

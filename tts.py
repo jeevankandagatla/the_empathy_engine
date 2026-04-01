@@ -1,5 +1,6 @@
 import pyttsx3
-import time
+import wave
+import os
 
 engine = pyttsx3.init()
 
@@ -24,31 +25,29 @@ def apply_voice(emotion, intensity):
     engine.setProperty('volume', volume)
 
 
-def get_pause_duration(text):
-    if text.endswith(","):
-        return 0.3
-    elif text.endswith("."):
-        return 0.6
-    elif text.endswith("!") or text.endswith("?"):
-        return 0.8
-    else:
-        return 0.2
-
-
 def speak_parts(parts_with_emotion):
-    full_text = ""
+    temp_files = []
 
-    for text, emotion, intensity in parts_with_emotion:
+    # Step 1: Generate individual WAV files
+    for i, (text, emotion, intensity) in enumerate(parts_with_emotion):
         apply_voice(emotion, intensity)
 
-        engine.say(text)
-        engine.runAndWait()  # speak immediately
+        filename = f"static/part_{i}.wav"
+        temp_files.append(filename)
 
-        pause = get_pause_duration(text)
-        time.sleep(pause)
+        engine.save_to_file(text, filename)
+        engine.runAndWait()
 
-        full_text += text + " "
+    # Step 2: Merge WAV files manually
+    output_file = "static/output.wav"
 
-    # Save full audio (optional)
-    engine.save_to_file(full_text.strip(), "output.mp3")
-    engine.runAndWait()
+    with wave.open(output_file, 'wb') as out:
+        for i, file in enumerate(temp_files):
+            with wave.open(file, 'rb') as w:
+                if i == 0:
+                    out.setparams(w.getparams())
+                out.writeframes(w.readframes(w.getnframes()))
+
+    # Step 3: Cleanup temp files
+    for file in temp_files:
+        os.remove(file)
