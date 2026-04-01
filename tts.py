@@ -1,14 +1,12 @@
 import pyttsx3
+import time
 
 engine = pyttsx3.init()
 
-def speak(text, emotion, intensity):
-    
-    # Default values
+def apply_voice(emotion, intensity):
     rate = 150
     volume = 0.8
 
-    # Emotion-based mapping
     if emotion == "excited":
         rate = 180 + int(40 * intensity)
         volume = 1.0
@@ -21,17 +19,36 @@ def speak(text, emotion, intensity):
     elif emotion == "angry":
         rate = 170 + int(30 * intensity)
         volume = 1.0
-    else:  # neutral
-        rate = 150
-        volume = 0.8
 
     engine.setProperty('rate', rate)
     engine.setProperty('volume', volume)
 
-    # Optional: change voice (try index 0 or 1)
-    voices = engine.getProperty('voices')
-    engine.setProperty('voice', voices[0].id)
 
-    # Save output
-    engine.save_to_file(text, "output.mp3")
+def get_pause_duration(text):
+    if text.endswith(","):
+        return 0.3
+    elif text.endswith("."):
+        return 0.6
+    elif text.endswith("!") or text.endswith("?"):
+        return 0.8
+    else:
+        return 0.2
+
+
+def speak_parts(parts_with_emotion):
+    full_text = ""
+
+    for text, emotion, intensity in parts_with_emotion:
+        apply_voice(emotion, intensity)
+
+        engine.say(text)
+        engine.runAndWait()  # speak immediately
+
+        pause = get_pause_duration(text)
+        time.sleep(pause)
+
+        full_text += text + " "
+
+    # Save full audio (optional)
+    engine.save_to_file(full_text.strip(), "output.mp3")
     engine.runAndWait()
