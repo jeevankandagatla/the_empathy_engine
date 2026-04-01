@@ -28,7 +28,7 @@ def process():
     speak_parts(parts_with_emotion)
 
     return jsonify({
-        "audio_files": audio_files
+        "audio_files": ["/static/output.wav"]
     })
 
 if __name__ == "__main__":

@@ -1,171 +1,552 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Empathy Engine Chat</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Empathy Engine</title>
+    <!-- Modern Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
     <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.25);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+            --text-color: #ffffff;
+            --accent: #00d2ff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
         body {
-            font-family: Arial;
-            background: #ece5dd;
+            height: 100vh;
             display: flex;
             justify-content: center;
+            align-items: center;
+            background: linear-gradient(-45deg, #1e3c72, #2a5298, #00d2ff, #3a7bd5);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-color);
+            overflow: hidden;
         }
 
-        .chat-box {
-            width: 420px;
-            background: #fff;
-            padding: 12px;
-            border-radius: 10px;
-            margin-top: 30px;
-            box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
-        .messages {
-            height: 420px;
-            overflow-y: auto;
-            margin-bottom: 10px;
-        }
-
-        .msg {
-            margin: 10px 0;
-            padding: 10px;
-            border-radius: 10px;
-            max-width: 85%;
-        }
-
-        .user {
-            background: #dcf8c6;
-            margin-left: auto;
-            text-align: right;
-        }
-
-        .bot {
-            background: #f1f0f0;
-            text-align: left;
-        }
-
-        input {
-            width: 68%;
-            padding: 8px;
-        }
-
-        button {
-            padding: 6px 10px;
-            margin-top: 5px;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
-            background: #4CAF50;
-            color: white;
-        }
-
-        button:hover {
-            background: #45a049;
-        }
-
-        .controls {
-            margin-top: 8px;
+        .chat-container {
+            width: 100%;
+            max-width: 480px;
+            height: 85vh;
+            background: rgba(20, 25, 40, 0.4);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px;
+            box-shadow: var(--glass-shadow);
             display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             gap: 10px;
         }
 
-        audio {
-            width: 100%;
-            margin-top: 5px;
+        .header h1 {
+            font-size: 1.4rem;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
+
+        .orb {
+            width: 12px;
+            height: 12px;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent), 0 0 20px var(--accent);
+            animation: orbPulse 2s infinite;
+        }
+
+        @keyframes orbPulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 15px var(--accent), 0 0 30px var(--accent); }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+
+        .messages {
+            flex: 1;
+            padding: 25px 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            scroll-behavior: smooth;
+        }
+
+        /* Custom Scrollbar */
+        .messages::-webkit-scrollbar { width: 6px; }
+        .messages::-webkit-scrollbar-track { background: transparent; }
+        .messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+        .msg {
+            max-width: 80%;
+            padding: 14px 18px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            animation: fadeIn 0.4s cubic-bezier(0.1, 0.7, 0.1, 1);
+            position: relative;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .msg.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #0ba360, #3cba92);
+            color: white;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 4px 15px rgba(11, 163, 96, 0.3);
+        }
+
+        .msg.bot {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-bottom-left-radius: 4px;
+            color: #eee;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 5px;
+            padding: 5px;
+        }
+        
+        .typing-indicator span {
+            width: 6px;
+            height: 6px;
+            background: #fff;
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out both;
+        }
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.4;}
+            40% { transform: scale(1); opacity: 1;}
+        }
+
+        /* CUSTOM AUDIO PLAYER */
+        .audio-player {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 200px;
+        }
+
+        .play-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            color: white;
+            transition: all 0.2s;
+        }
+        .play-btn:hover { background: rgba(255, 255, 255, 0.3); transform: scale(1.05); }
+        .play-btn svg { width: 18px; height: 18px; }
+
+        .progress-container {
+            flex: 1;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: var(--accent);
+            border-radius: 10px;
+            position: absolute;
+            top: 0; left: 0;
+            pointer-events: none;
+            transition: width 0.1s linear;
+        }
+
+        .time-display {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.7);
+            min-width: 35px;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .download-btn {
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+        }
+        .download-btn:hover { color: white; }
+        .download-btn svg { width: 16px; height: 16px; }
+
+        /* INPUT AREA */
+        .input-area {
+            padding: 15px 20px 25px;
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .input-box {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            padding: 5px 15px;
+            transition: all 0.3s;
+        }
+
+        .input-box:focus-within {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+
+        input[type="text"] {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 12px 5px;
+            color: white;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        input[type="text"]::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .mic-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            display: flex;
+            transition: all 0.2s;
+        }
+        
+        .mic-btn:hover { color: white; }
+        .mic-btn svg { width: 20px; height: 20px; }
+        
+        .mic-btn.recording {
+            color: #ff4757;
+            animation: pulseRecord 1.5s infinite;
+        }
+
+        @keyframes pulseRecord {
+            0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255, 71, 87, 0)); }
+            50% { transform: scale(1.1); filter: drop-shadow(0 0 8px rgba(255, 71, 87, 0.8)); }
+            100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255, 71, 87, 0)); }
+        }
+
+        .send-btn {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d2ff, #3a7bd5);
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+            transition: all 0.2s;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 210, 255, 0.4);
+        }
+        
+        .send-btn svg { width: 22px; height: 22px; transform: translateX(1px); }
+
     </style>
 </head>
-
 <body>
 
-<div class="chat-box">
-    <div class="messages" id="messages"></div>
+<div class="chat-container">
+    <div class="header">
+        <div class="orb"></div>
+        <h1>Empathy Engine</h1>
+    </div>
 
-    <input type="text" id="text" placeholder="Type message...">
-    <button onclick="sendMessage()">Send</button>
+    <div class="messages" id="messages">
+        <!-- Initial greeting -->
+        <div class="msg bot">
+            How are you feeling today? I'm here to listen.
+        </div>
+    </div>
+
+    <div class="input-area">
+        <div class="input-box">
+            <input type="text" id="text" placeholder="Share your thoughts..." onkeypress="handleEnter(event)">
+            <button id="micBtn" class="mic-btn" onclick="toggleRecording()" title="Record Audio">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                </svg>
+            </button>
+        </div>
+        <button class="send-btn" onclick="sendMessage()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+        </button>
+    </div>
 </div>
 
 <script>
+    const SVGs = {
+        play: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>',
+        pause: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>'
+    };
 
-function sendMessage() {
-    let text = document.getElementById("text").value;
-    if (!text) return;
-
-    let messages = document.getElementById("messages");
-
-    messages.innerHTML += `<div class="msg user">${text}</div>`;
-
-    fetch("/process", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ text: text })
-    })
-    .then(res => res.json())
-    .then(data => {
-
-        let audioIds = [];
-        let html = `<div class="msg bot">`;
-
-        data.audio_files.forEach((file, index) => {
-            let id = "audio_" + Date.now() + "_" + index;
-            audioIds.push(id);
-
-            html += `
-                <audio id="${id}" controls preload="auto">
-                    <source src="${file}?t=${new Date().getTime()}" type="audio/wav">
-                </audio>
-            `;
-        });
-
-        // ✅ FIXED CONTROLS (VISIBLE)
-        html += `
-            <div class="controls">
-                <button onclick='playAll(${JSON.stringify(audioIds)})'>▶ Play All</button>
-                <a href="${data.audio_files[0]}" download>
-                    <button>⬇ Download</button>
-                </a>
-            </div>
-        </div>`;
-
-        messages.innerHTML += html;
-
-        // Auto play
-        playAll(audioIds);
-
-        document.getElementById("text").value = "";
-        messages.scrollTop = messages.scrollHeight;
-    });
-}
-
-
-function playAll(ids) {
-    let i = 0;
-
-    function playNext() {
-        if (i >= ids.length) return;
-
-        let audio = document.getElementById(ids[i]);
-
-        audio.currentTime = 0;
-        audio.load();
-
-        audio.play().catch(() => {
-            console.log("Autoplay blocked");
-        });
-
-        audio.onended = () => {
-            setTimeout(() => {
-                i++;
-                playNext();
-            }, 300);
-        };
+    function handleEnter(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
     }
 
-    playNext();
-}
+    function formatTime(seconds) {
+        if (!seconds || isNaN(seconds)) return "0:00";
+        let min = Math.floor(seconds / 60);
+        let sec = Math.floor(seconds % 60);
+        return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+    }
+
+    // AUDIO CONTROLS
+    function toggleAudio(btn, audioId) {
+        let audio = document.getElementById(audioId);
+        if (audio.paused) {
+            audio.play().catch(e => console.log(e));
+            btn.innerHTML = SVGs.pause;
+        } else {
+            audio.pause();
+            btn.innerHTML = SVGs.play;
+        }
+    }
+
+    function updateTime(audioId) {
+        let audio = document.getElementById(audioId);
+        let progress = document.getElementById('progress_' + audioId);
+        let timeDisp = document.getElementById('time_' + audioId);
+        
+        if (audio.duration) {
+            let percent = (audio.currentTime / audio.duration) * 100;
+            progress.style.width = percent + '%';
+        }
+        timeDisp.innerText = formatTime(audio.currentTime);
+    }
+
+    function seekAudio(event, audioId) {
+        let audio = document.getElementById(audioId);
+        let container = event.currentTarget;
+        let rect = container.getBoundingClientRect();
+        let x = event.clientX - rect.left;
+        let percent = x / rect.width;
+        
+        if (audio.duration) {
+            audio.currentTime = percent * audio.duration;
+            document.getElementById('progress_' + audioId).style.width = (percent * 100) + '%';
+        }
+    }
+
+    function onAudioEnded(audioId) {
+        let btn = document.querySelector(`button[onclick="toggleAudio(this, '${audioId}')"]`);
+        if (btn) btn.innerHTML = SVGs.play;
+        document.getElementById('progress_' + audioId).style.width = '0%';
+        document.getElementById('time_' + audioId).innerText = "0:00";
+    }
+
+    // MAIN CHAT FUNCTION
+    function sendMessage() {
+        let textInput = document.getElementById("text");
+        let text = textInput.value.trim();
+        if (!text) return;
+
+        let messages = document.getElementById("messages");
+
+        // 1. Append User Message
+        messages.insertAdjacentHTML('beforeend', `<div class="msg user">${text}</div>`);
+        textInput.value = ""; 
+        messages.scrollTop = messages.scrollHeight;
+
+        // Unlock audio context for mobile / strict autoplay policies
+        let unlockAudio = new Audio();
+        unlockAudio.play().catch(e => {});
+
+        // 2. Append Loading Bot Message
+        let botMsgId = "bot_" + Date.now();
+        let loadingHtml = `
+            <div class="msg bot" id="${botMsgId}">
+                <div class="typing-indicator">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+        `;
+        messages.insertAdjacentHTML('beforeend', loadingHtml);
+        messages.scrollTop = messages.scrollHeight;
+
+        // 3. Fetch from API
+        fetch("/process", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: text })
+        })
+        .then(res => res.json())
+        .then(data => {
+            let file = data.audio_files[0];
+            let audioId = "audio_" + Date.now();
+            let timestamp = new Date().getTime();
+
+            // Replace loading state with the custom premium audio player
+            let audioHtml = `
+                <div class="audio-player">
+                    <button class="play-btn" onclick="toggleAudio(this, '${audioId}')">
+                        ${SVGs.pause} <!-- Will start playing immediately -->
+                    </button>
+                    
+                    <div class="progress-container" onclick="seekAudio(event, '${audioId}')">
+                        <div class="progress-bar" id="progress_${audioId}"></div>
+                    </div>
+                    
+                    <span class="time-display" id="time_${audioId}">0:00</span>
+                    
+                    <a class="download-btn" href="${file}" download title="Download Audio">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                    </a>
+
+                    <!-- Hidden Audio Element -->
+                    <audio id="${audioId}" ontimeupdate="updateTime('${audioId}')" onended="onAudioEnded('${audioId}')" preload="auto">
+                        <source src="${file}?t=${timestamp}" type="audio/wav">
+                    </audio>
+                </div>
+            `;
+
+            let botBubble = document.getElementById(botMsgId);
+            botBubble.innerHTML = audioHtml;
+
+            // Autoplay the newly rendered audio
+            let newAudio = document.getElementById(audioId);
+            newAudio.play().catch(e => {
+                console.log("Autoplay blocked", e);
+                // Revert icon to play if autoplay failed
+                botBubble.querySelector('.play-btn').innerHTML = SVGs.play;
+            });
+
+            messages.scrollTop = messages.scrollHeight;
+        });
+    }
+
+    // ---------- SPEECH RECOGNITION (AUDIO INPUT) ----------
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+    let isRecording = false;
+
+    if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+
+        recognition.onstart = function() {
+            isRecording = true;
+            document.getElementById("micBtn").classList.add("recording");
+            document.getElementById("text").placeholder = "Listening...";
+        };
+
+        recognition.onresult = function(event) {
+            let transcript = event.results[0][0].transcript;
+            document.getElementById("text").value = transcript;
+            sendMessage(); // Automatically send after speaking
+        };
+
+        recognition.onerror = function(event) {
+            console.error("Speech recognition error", event.error);
+            stopRecording();
+        };
+
+        recognition.onend = function() {
+            stopRecording();
+        };
+    } else {
+        document.getElementById("micBtn").style.display = 'none';
+        console.warn("Speech Recognition API not supported in this browser.");
+    }
+
+    function toggleRecording() {
+        if (!SpeechRecognition) return;
+        
+        if (isRecording) {
+            recognition.stop();
+        } else {
+            recognition.start();
+        }
+    }
+
+    function stopRecording() {
+        isRecording = false;
+        let micBtn = document.getElementById("micBtn");
+        if(micBtn) micBtn.classList.remove("recording");
+        document.getElementById("text").placeholder = "Share your thoughts...";
+    }
 
 </script>
-
 </body>
 </html>
