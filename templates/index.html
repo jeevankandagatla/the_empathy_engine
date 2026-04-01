@@ -11,25 +11,25 @@
         }
 
         .chat-box {
-            width: 400px;
+            width: 420px;
             background: #fff;
-            padding: 10px;
+            padding: 12px;
             border-radius: 10px;
             margin-top: 30px;
             box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
         }
 
         .messages {
-            height: 400px;
+            height: 420px;
             overflow-y: auto;
             margin-bottom: 10px;
         }
 
         .msg {
-            margin: 8px 0;
-            padding: 8px;
-            border-radius: 8px;
-            max-width: 80%;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 85%;
         }
 
         .user {
@@ -44,17 +44,32 @@
         }
 
         input {
-            width: 70%;
-            padding: 6px;
+            width: 68%;
+            padding: 8px;
         }
 
         button {
-            padding: 6px;
-            margin-left: 5px;
+            padding: 6px 10px;
+            margin-top: 5px;
             cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background: #4CAF50;
+            color: white;
+        }
+
+        button:hover {
+            background: #45a049;
         }
 
         .controls {
+            margin-top: 8px;
+            display: flex;
+            gap: 10px;
+        }
+
+        audio {
+            width: 100%;
             margin-top: 5px;
         }
     </style>
@@ -70,13 +85,13 @@
 </div>
 
 <script>
+
 function sendMessage() {
     let text = document.getElementById("text").value;
     if (!text) return;
 
     let messages = document.getElementById("messages");
 
-    // Show user message
     messages.innerHTML += `<div class="msg user">${text}</div>`;
 
     fetch("/process", {
@@ -89,38 +104,67 @@ function sendMessage() {
     .then(res => res.json())
     .then(data => {
 
-        let audioUrl = data.audio + "?t=" + new Date().getTime();
+        let audioIds = [];
+        let html = `<div class="msg bot">`;
 
-        // Add bot message with controls
-        let audioId = "audio_" + Date.now();
+        data.audio_files.forEach((file, index) => {
+            let id = "audio_" + Date.now() + "_" + index;
+            audioIds.push(id);
 
-        messages.innerHTML += `
-            <div class="msg bot">
-                <audio id="${audioId}" controls>
-                    <source src="${audioUrl}" type="audio/wav">
+            html += `
+                <audio id="${id}" controls preload="auto">
+                    <source src="${file}?t=${new Date().getTime()}" type="audio/wav">
                 </audio>
-                <div class="controls">
-                    <button onclick="playAudio('${audioId}')">▶ Play</button>
-                    <a href="${audioUrl}" download>
-                        <button>⬇ Download</button>
-                    </a>
-                </div>
-            </div>
-        `;
+            `;
+        });
 
-        // Auto-play
-        setTimeout(() => {
-            document.getElementById(audioId).play();
-        }, 300);
+        // ✅ FIXED CONTROLS (VISIBLE)
+        html += `
+            <div class="controls">
+                <button onclick='playAll(${JSON.stringify(audioIds)})'>▶ Play All</button>
+                <a href="${data.audio_files[0]}" download>
+                    <button>⬇ Download</button>
+                </a>
+            </div>
+        </div>`;
+
+        messages.innerHTML += html;
+
+        // Auto play
+        playAll(audioIds);
 
         document.getElementById("text").value = "";
         messages.scrollTop = messages.scrollHeight;
     });
 }
 
-function playAudio(id) {
-    document.getElementById(id).play();
+
+function playAll(ids) {
+    let i = 0;
+
+    function playNext() {
+        if (i >= ids.length) return;
+
+        let audio = document.getElementById(ids[i]);
+
+        audio.currentTime = 0;
+        audio.load();
+
+        audio.play().catch(() => {
+            console.log("Autoplay blocked");
+        });
+
+        audio.onended = () => {
+            setTimeout(() => {
+                i++;
+                playNext();
+            }, 300);
+        };
+    }
+
+    playNext();
 }
+
 </script>
 
 </body>

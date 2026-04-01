@@ -16,15 +16,19 @@ def process():
     parts = split_text(text)
 
     parts_with_emotion = []
-    for part in parts:
+    audio_files = []
+
+    for i, part in enumerate(parts):
         emotion, intensity = detect_emotion(part)
         parts_with_emotion.append((part, emotion, intensity))
+
+        filename = f"/static/part_{i}.wav"
+        audio_files.append(filename)
 
     speak_parts(parts_with_emotion)
 
     return jsonify({
-        "status": "success",
-        "audio": "/static/output.mp3"
+        "audio_files": audio_files
     })
 
 if __name__ == "__main__":

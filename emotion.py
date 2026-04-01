@@ -2,24 +2,35 @@ import re
 from textblob import TextBlob
 
 def split_text(text):
-    # Split but KEEP delimiters like "but"
-    parts = re.split(r'(\bbut\b|\bhowever\b|\balthough\b|[,.!?])', text, flags=re.IGNORECASE)
+    # Step 1: Split by punctuation (keep punctuation)
+    sentences = re.split(r'(?<=[.!?,])\s+', text)
 
-    result = []
-    current = ""
+    final_parts = []
 
-    for part in parts:
-        if part.lower() in ["but", "however", "although"] or re.match(r'[,.!?]', part):
-            current += " " + part
-            result.append(current.strip())
-            current = ""
+    for sentence in sentences:
+        sentence = sentence.strip()
+        if not sentence:
+            continue
+
+        # Step 2: Check for connectors inside sentence
+        match = re.search(r'\b(but|however|although)\b', sentence, flags=re.IGNORECASE)
+
+        if match:
+            idx = match.start()
+
+            # Split into two parts
+            first = sentence[:idx].strip()
+            second = sentence[idx:].strip()
+
+            # Add only if meaningful
+            if first:
+                final_parts.append(first)
+            if second:
+                final_parts.append(second)
         else:
-            current += " " + part
+            final_parts.append(sentence)
 
-    if current.strip():
-        result.append(current.strip())
-
-    return result
+    return final_parts
 
 def detect_emotion(text):
     analysis = TextBlob(text)
