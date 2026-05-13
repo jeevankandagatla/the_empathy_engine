@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 from emotion import detect_emotion, split_text
-from tts import speak_parts
+from tts import speak_parts_sync
 
 app = Flask(__name__)
 
@@ -16,19 +16,16 @@ def process():
     parts = split_text(text)
 
     parts_with_emotion = []
-    audio_files = []
 
     for i, part in enumerate(parts):
         emotion, intensity = detect_emotion(part)
         parts_with_emotion.append((part, emotion, intensity))
 
-        filename = f"/static/part_{i}.wav"
-        audio_files.append(filename)
-
-    speak_parts(parts_with_emotion)
+    output_filename = "static/output.mp3"
+    speak_parts_sync(parts_with_emotion, output_filename)
 
     return jsonify({
-        "audio_files": ["/static/output.wav"]
+        "audio_files": ["/" + output_filename]
     })
 
 if __name__ == "__main__":
